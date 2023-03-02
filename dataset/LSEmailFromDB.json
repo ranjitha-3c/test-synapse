@@ -1,0 +1,30 @@
+{
+	"name": "LSEmailFromDB",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "LS_TargetAzureSQLControlDB",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "FirstName",
+				"type": "varchar"
+			},
+			{
+				"name": "LastName",
+				"type": "varchar"
+			},
+			{
+				"name": "EmailAddress",
+				"type": "varchar"
+			}
+		],
+		"typeProperties": {
+			"schema": "dbo",
+			"table": "EmailRecipient"
+		}
+	},
+	"type": "Microsoft.Synapse/workspaces/datasets"
+}

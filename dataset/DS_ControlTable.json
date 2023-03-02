@@ -1,0 +1,92 @@
+{
+	"name": "DS_ControlTable",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "LS_TargetAzureSQLControlDB",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "PipelineTriggerName",
+				"type": "varchar"
+			},
+			{
+				"name": "PipelineLastRunDateTime",
+				"type": "datetime2",
+				"scale": 7
+			},
+			{
+				"name": "SourceServerName",
+				"type": "varchar"
+			},
+			{
+				"name": "SourceDatabaseName",
+				"type": "varchar"
+			},
+			{
+				"name": "SourceSchemaName",
+				"type": "varchar"
+			},
+			{
+				"name": "SourceTableName",
+				"type": "varchar"
+			},
+			{
+				"name": "SourceKeyColumnList",
+				"type": "varchar"
+			},
+			{
+				"name": "SourceExtractMethod",
+				"type": "varchar"
+			},
+			{
+				"name": "SourceExtractSQL",
+				"type": "varchar"
+			},
+			{
+				"name": "SourceFullExtractOverrideFlag",
+				"type": "nchar"
+			},
+			{
+				"name": "DeltaCreateWatermarkColumnName",
+				"type": "varchar"
+			},
+			{
+				"name": "DeltaUpdateWatermarkColumnName",
+				"type": "varchar"
+			},
+			{
+				"name": "DeltaLastWatermarkDateTime",
+				"type": "datetime2",
+				"scale": 7
+			},
+			{
+				"name": "DataLakeContainer",
+				"type": "varchar"
+			},
+			{
+				"name": "DataLakeFolder",
+				"type": "varchar"
+			},
+			{
+				"name": "TargetDBSchemaName",
+				"type": "varchar"
+			},
+			{
+				"name": "TargetDBTableName",
+				"type": "varchar"
+			},
+			{
+				"name": "IsActiveFlag",
+				"type": "char"
+			}
+		],
+		"typeProperties": {
+			"schema": "etl",
+			"table": "ControlTable"
+		}
+	},
+	"type": "Microsoft.Synapse/workspaces/datasets"
+}

@@ -1,0 +1,45 @@
+{
+	"name": "DS_TargetBronzeParquet",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "adaptrainingworkspace-WorkspaceDefaultStorage",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"FolderName": {
+				"type": "string",
+				"defaultValue": "test"
+			},
+			"FileName": {
+				"type": "string",
+				"defaultValue": "test"
+			},
+			"DatalakeContainerName": {
+				"type": "string",
+				"defaultValue": "test"
+			}
+		},
+		"annotations": [],
+		"type": "Parquet",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"fileName": {
+					"value": "@dataset().FileName",
+					"type": "Expression"
+				},
+				"folderPath": {
+					"value": "@dataset().FolderName",
+					"type": "Expression"
+				},
+				"fileSystem": {
+					"value": "@dataset().DatalakeContainerName",
+					"type": "Expression"
+				}
+			},
+			"compressionCodec": "snappy"
+		},
+		"schema": []
+	},
+	"type": "Microsoft.Synapse/workspaces/datasets"
+}

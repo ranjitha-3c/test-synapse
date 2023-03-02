@@ -1,0 +1,33 @@
+{
+	"name": "DS_SourceSQLTables",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "LS_adapTraningSQLVMWWI",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"tablename": {
+				"type": "string",
+				"defaultValue": null
+			},
+			"schemaname": {
+				"type": "string",
+				"defaultValue": null
+			}
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [],
+		"typeProperties": {
+			"schema": {
+				"value": "@dataset().schemaname",
+				"type": "Expression"
+			},
+			"table": {
+				"value": "@dataset().tablename",
+				"type": "Expression"
+			}
+		}
+	},
+	"type": "Microsoft.Synapse/workspaces/datasets"
+}

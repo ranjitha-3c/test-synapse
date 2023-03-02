@@ -1,0 +1,317 @@
+{
+	"name": "PL_SourcetoBronze_broke",
+	"properties": {
+		"activities": [
+			{
+				"name": "SetProcessStartTime",
+				"type": "SetVariable",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "PipelineLastRunDateTime",
+					"value": {
+						"value": "@concat( formatDateTime(convertFromUtc(pipeline().TriggerTime,'Central Standard Time'),'yyyy'),'-',formatDateTime(convertFromUtc(pipeline().TriggerTime,'Eastern Standard Time'),'MM'),'-',formatDateTime(convertFromUtc(pipeline().TriggerTime,'Eastern Standard Time'),'dd'),' ',formatDateTime(convertFromUtc(pipeline().TriggerTime,'Eastern Standard Time'),'HH'),':',formatDateTime(convertFromUtc(pipeline().TriggerTime,'Eastern Standard Time'),'mm'),':',formatDateTime(convertFromUtc(pipeline().TriggerTime,'Eastern Standard Time'),'ss'))",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "ControlTable",
+				"type": "Lookup",
+				"dependsOn": [
+					{
+						"activity": "SetProcessStartTime",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"sqlReaderQuery": {
+							"value": "select * from [etl].[controltable]\nwhere PipelineTriggerName= 'PL_SourcetoBronze'",
+							"type": "Expression"
+						},
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "DS_ControlTable",
+						"type": "DatasetReference"
+					},
+					"firstRowOnly": false
+				}
+			},
+			{
+				"name": "ToBronze",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "ControlTable",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('ControlTable').output.value",
+						"type": "Expression"
+					},
+					"isSequential": true,
+					"activities": [
+						{
+							"name": "DeltaorFullLoad",
+							"type": "IfCondition",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"expression": {
+									"value": "@equals(item().SourceExtractMethod , 'Full')",
+									"type": "Expression"
+								},
+								"ifFalseActivities": [
+									{
+										"name": "ConvertWatermarkdatetime",
+										"type": "SetVariable",
+										"dependsOn": [],
+										"userProperties": [],
+										"typeProperties": {
+											"variableName": "WaterMarkRunDateTime",
+											"value": {
+												"value": "@formatDateTime(item().DeltaLastWatermarkDateTime, 'yyyy-MM-dd HH:mm:ss')",
+												"type": "Expression"
+											}
+										}
+									},
+									{
+										"name": "IncrementalLoad",
+										"type": "Copy",
+										"dependsOn": [
+											{
+												"activity": "ConvertWatermarkdatetime",
+												"dependencyConditions": [
+													"Succeeded"
+												]
+											}
+										],
+										"policy": {
+											"timeout": "0.12:00:00",
+											"retry": 0,
+											"retryIntervalInSeconds": 30,
+											"secureOutput": false,
+											"secureInput": false
+										},
+										"userProperties": [],
+										"typeProperties": {
+											"source": {
+												"type": "AzureSqlSource",
+												"sqlReaderQuery": {
+													"value": "SELECT * FROM @{item().SourceSchemaName}.@{item().SourceTableName} \nWHERE (@{item().DeltaCreateWatermarkColumnName} > '@{item().DeltaLastWatermarkDateTime}')\nOR @{item().DeltaUpdateWatermarkColumnName} > '@{item().DeltaLastWatermarkDateTime}')\n",
+													"type": "Expression"
+												},
+												"queryTimeout": "02:00:00",
+												"partitionOption": "None"
+											},
+											"sink": {
+												"type": "ParquetSink",
+												"storeSettings": {
+													"type": "AzureBlobFSWriteSettings"
+												},
+												"formatSettings": {
+													"type": "ParquetWriteSettings"
+												}
+											},
+											"enableStaging": false,
+											"translator": {
+												"type": "TabularTranslator",
+												"typeConversion": true,
+												"typeConversionSettings": {
+													"allowDataTruncation": true,
+													"treatBooleanAsNumber": false
+												}
+											}
+										},
+										"inputs": [
+											{
+												"referenceName": "DS_SourceSQLIncremental",
+												"type": "DatasetReference"
+											}
+										],
+										"outputs": [
+											{
+												"referenceName": "DS_TargetBronzeParquet",
+												"type": "DatasetReference",
+												"parameters": {
+													"FolderName": {
+														"value": "@item().DataLakeFolder",
+														"type": "Expression"
+													},
+													"FileName": {
+														"value": "@concat(item().TargetDBTableName,'.parquet')",
+														"type": "Expression"
+													},
+													"DatalakeContainerName": {
+														"value": "@item().DataLakeContainer",
+														"type": "Expression"
+													}
+												}
+											}
+										]
+									}
+								],
+								"ifTrueActivities": [
+									{
+										"name": "SourcetoBronze",
+										"type": "Copy",
+										"dependsOn": [],
+										"policy": {
+											"timeout": "0.12:00:00",
+											"retry": 0,
+											"retryIntervalInSeconds": 30,
+											"secureOutput": false,
+											"secureInput": false
+										},
+										"userProperties": [],
+										"typeProperties": {
+											"source": {
+												"type": "AzureSqlSource",
+												"queryTimeout": "02:00:00",
+												"partitionOption": "None"
+											},
+											"sink": {
+												"type": "ParquetSink",
+												"storeSettings": {
+													"type": "AzureBlobFSWriteSettings"
+												},
+												"formatSettings": {
+													"type": "ParquetWriteSettings"
+												}
+											},
+											"enableStaging": false,
+											"translator": {
+												"type": "TabularTranslator",
+												"typeConversion": true,
+												"typeConversionSettings": {
+													"allowDataTruncation": true,
+													"treatBooleanAsNumber": false
+												}
+											}
+										},
+										"inputs": [
+											{
+												"referenceName": "DS_SourceSQLTables",
+												"type": "DatasetReference",
+												"parameters": {
+													"tablename": {
+														"value": "@item().SourceTableName",
+														"type": "Expression"
+													},
+													"schemaname": {
+														"value": "@item().SourceSchemaName",
+														"type": "Expression"
+													}
+												}
+											}
+										],
+										"outputs": [
+											{
+												"referenceName": "DS_TargetBronzeParquet",
+												"type": "DatasetReference",
+												"parameters": {
+													"FolderName": {
+														"value": "@item().DataLakeFolder",
+														"type": "Expression"
+													},
+													"FileName": {
+														"value": "@concat(item().TargetDBTableName , '.parquet')",
+														"type": "Expression"
+													},
+													"DatalakeContainerName": {
+														"value": "@item().DataLakeContainer",
+														"type": "Expression"
+													}
+												}
+											}
+										]
+									}
+								]
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "UpdateControlTable",
+				"type": "SqlServerStoredProcedure",
+				"dependsOn": [
+					{
+						"activity": "ToBronze",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"storedProcedureName": "[etl].[usp_UpdateControlTable]",
+					"storedProcedureParameters": {
+						"DeltaLastWastermarkDateTime": {
+							"value": {
+								"value": "@variables('PipelineLastRunDateTime')",
+								"type": "Expression"
+							},
+							"type": "DateTime"
+						},
+						"PipelineLastRunDateTime": {
+							"value": {
+								"value": "@variables('PipelineLastRunDateTime')",
+								"type": "Expression"
+							},
+							"type": "DateTime"
+						},
+						"PipelineTriggerName": {
+							"value": {
+								"value": "@pipeline().Pipeline",
+								"type": "Expression"
+							},
+							"type": "String"
+						}
+					}
+				},
+				"linkedServiceName": {
+					"referenceName": "LS_TargetAzureSQLControlDB",
+					"type": "LinkedServiceReference"
+				}
+			}
+		],
+		"variables": {
+			"PipelineLastRunDateTime": {
+				"type": "String"
+			},
+			"WaterMarkRunDateTime": {
+				"type": "String"
+			}
+		},
+		"annotations": [],
+		"lastPublishTime": "2023-02-26T20:41:15Z"
+	},
+	"type": "Microsoft.Synapse/workspaces/pipelines"
+}

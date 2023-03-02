@@ -1,0 +1,88 @@
+{
+	"name": "pl_orchestration_recipe_5_child",
+	"properties": {
+		"activities": [
+			{
+				"name": "Get Email Recipients",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"sqlReaderQuery": "SELECT * FROM EmailRecipient",
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "LSEmailFromDB",
+						"type": "DatasetReference"
+					},
+					"firstRowOnly": false
+				}
+			},
+			{
+				"name": "ForEach1",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "Get Email Recipients",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('Get Email Recipients').output.value",
+						"type": "Expression"
+					},
+					"activities": [
+						{
+							"name": "Send Email",
+							"type": "WebActivity",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"url": {
+									"value": "https://prod-23.eastus2.logic.azure.com:443/workflows/c484b7a2b8c24ec0a9ba33b26c076b86/triggers/manual/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=yb5yJIpfQTzdeMgEMowzq3l7N7Yd9IdKh_TwzQO0RCA",
+									"type": "Expression"
+								},
+								"connectVia": {
+									"referenceName": "AutoResolveIntegrationRuntime",
+									"type": "IntegrationRuntimeReference"
+								},
+								"method": "POST",
+								"headers": {
+									"Content-Type": "application/json"
+								},
+								"body": {
+									"value": "@json(concat('{\"emailAddress\": \"', item().emailAddress, '\", \"subject\": \"ADF Pipeline Failure\", \"messageBody\": \"ADF Pipeline Load the table has Failed\"}'))",
+									"type": "Expression"
+								}
+							}
+						}
+					]
+				}
+			}
+		],
+		"annotations": [],
+		"lastPublishTime": "2023-03-01T22:10:18Z"
+	},
+	"type": "Microsoft.Synapse/workspaces/pipelines"
+}

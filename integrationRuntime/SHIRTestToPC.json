@@ -1,0 +1,6 @@
+{
+	"name": "SHIRTestToPC",
+	"properties": {
+		"type": "SelfHosted"
+	}
+}

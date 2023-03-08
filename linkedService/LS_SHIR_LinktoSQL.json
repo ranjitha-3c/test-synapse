@@ -1,0 +1,16 @@
+{
+	"name": "LS_SHIR_LinktoSQL",
+	"type": "Microsoft.Synapse/workspaces/linkedservices",
+	"properties": {
+		"annotations": [],
+		"type": "SqlServer",
+		"typeProperties": {
+			"connectionString": "integrated security=False;data source=DESKTOP-VCC06UH;initial catalog=AdventureWorks;user id=matt",
+			"encryptedCredential": "eyJDcmVkZW50aWFsSWQiOiIwNDY5ZGQxYi0yMGIyLTRhMWEtODE2OC05ODQyYzU2ZDE2ZDAiLCJWZXJzaW9uIjoiMi4wIiwiQ2xhc3NUeXBlIjoiTWljcm9zb2Z0LkRhdGFQcm94eS5Db3JlLkludGVyU2VydmljZURhdGFDb250cmFjdC5DcmVkZW50aWFsU1UwNkNZMTQifQ=="
+		},
+		"connectVia": {
+			"referenceName": "SHIRTestToPC",
+			"type": "IntegrationRuntimeReference"
+		}
+	}
+}
